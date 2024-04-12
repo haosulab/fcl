@@ -729,7 +729,7 @@ bool coneHalfspaceDistance(const Cone<S>& s1, const Transform3<S>& tf1,
   }
 
   if(dist) *dist = -1;
-  return false
+  return false;
 }
 
 //==============================================================================

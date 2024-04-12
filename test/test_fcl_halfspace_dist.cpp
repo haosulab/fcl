@@ -76,7 +76,7 @@ void test_distance_box_half_space(fcl::GJKSolverType solver_type)
   EXPECT_NEAR(contacts[0].penetration_depth, 0.051, kTolerance);
 
   // Now perform the same test but with the box's z axis Cz pointing down.
-  X_WB.linear() = AngleAxis<S>(fcl::constants<S>::pi(), 
+  X_WB.linear() = AngleAxis<S>(fcl::constants<S>::pi(),
                                Vector3d::UnitX()).matrix();
   X_WB.translation() = Vector3<S>(0, 0, 0.049);
   box_co.setTransform(X_WB);
@@ -91,7 +91,7 @@ void test_distance_box_half_space(fcl::GJKSolverType solver_type)
   EXPECT_NEAR(contacts[0].penetration_depth, 0.051, kTolerance);
 
   // finally rotate the box by half a pi and shift it by just over the radius in z direction
-  X_WB.linear() = AngleAxis<S>(fcl::constants<S>::pi() / 2, 
+  X_WB.linear() = AngleAxis<S>(fcl::constants<S>::pi() / 2,
                                Vector3d::UnitX()).matrix();
   X_WB.translation() = Vector3<S>(0, 0, 0.051);
   box_co.setTransform(X_WB);
@@ -133,7 +133,7 @@ void test_distance_sphere_half_space(fcl::GJKSolverType solver_type)
   Transform3<S> X_WS(Translation3<S>(Vector3<S>(0.0, 0.0, 0.11)));
   // Pose of half space frame H in the world frame W.
   Transform3<S> X_WH = Transform3<S>::Identity();
-  
+
   CollisionObject<S> sphere_obj(sphere, X_WS);
   CollisionObject<S> half_space_obj(half_space, X_WH);
 
@@ -161,7 +161,7 @@ void test_distance_ellipsoid_half_space(fcl::GJKSolverType solver_type)
   Transform3<S> X_WE(Translation3<S>(Vector3<S>(0.0, 0.0, 0.21)));
   // Pose of half space frame H in the world frame W.
   Transform3<S> X_WH = Transform3<S>::Identity();
-  
+
   CollisionObject<S> ellipsoid_obj(ellipsoid, X_WE);
   CollisionObject<S> half_space_obj(half_space, X_WH);
 
@@ -260,7 +260,7 @@ void test_distance_cone_half_space(fcl::GJKSolverType solver_type)
   EXPECT_NEAR(distance_result.min_distance, 0.11, kTolerance);
 
   // Then, rotate the cone by pi/4 and make its translation 0.22
-  X_WS.linear() = AngleAxis<S>(fcl::constants<S>::pi()/4, 
+  X_WS.linear() = AngleAxis<S>(fcl::constants<S>::pi()/4,
                                Vector3d::UnitX()).matrix();
   X_WS.translation() = Vector3<S>(0, 0, 0.22);
   cone_obj.setTransform(X_WS);
@@ -270,7 +270,7 @@ void test_distance_cone_half_space(fcl::GJKSolverType solver_type)
   EXPECT_NEAR(distance_result.min_distance, 0.22-0.3/sqrt(2), kTolerance);
 
   // Do it the other way around rotate by -pi/4 and make the translation
-  X_WS.linear() = AngleAxis<S>(-fcl::constants<S>::pi()/4, 
+  X_WS.linear() = AngleAxis<S>(-fcl::constants<S>::pi()/4,
                                Vector3d::UnitX()).matrix();
   cone_obj.setTransform(X_WS);
 
