@@ -1025,25 +1025,31 @@ template <typename S>
 bool planeHalfspaceDistance(
     const Plane<S>& s1, const Transform3<S>& tf1,
     const Halfspace<S>& s2, const Transform3<S>& tf2,
-    S* distance, Vector3<S>* closest_pts_p, Vector3<S>* closest_pts_h)
+    S* dist, Vector3<S>* closest_pts_p, Vector3<S>* closest_pts_h)
 {
-  Plane<S> new_s1 = transform(s1, tf1);
-  Halfspace<S> new_s2 = transform(s2, tf2);
+  const Plane<S> new_s1 = transform(s1, tf1);
+  const Halfspace<S> new_s2 = transform(s2, tf2);
 
-  Vector3<S> dir = (new_s1.n).cross(new_s2.n);
-  S dir_norm = dir.squaredNorm();
-  if(dir_norm < std::numeric_limits<S>::epsilon()) // parallel
-  {
-    *distance = new_s1.d - new_s2.d;
-    if (*distance >= 0) {
-      *closest_pts_p = new_s1.n * new_s1.d;
-      *closest_pts_h = *closest_pts_p - (*distance) * new_s2.n;
+  const S dir_norm = (new_s1.n).cross(new_s2.n).squaredNorm();
+  if (const S distance = new_s1.d - new_s2.d;
+      dir_norm < std::numeric_limits<S>::epsilon())  // parallel
+    if ((new_s1.n).dot(new_s2.n) > 0 && distance > 0)
+    {
+      if(dist) *dist = distance;
+      if(closest_pts_p) *closest_pts_p = new_s1.n * new_s1.d;
+      if(closest_pts_h) *closest_pts_h = new_s1.n * new_s1.d - distance * new_s2.n;
+      return true;
     }
-    return *distance < 0;
-  }
+    else if ((new_s1.n).dot(new_s2.n) < 0 && distance < 0)
+    {
+      if(dist) *dist = -distance;
+      if(closest_pts_p) *closest_pts_p = new_s1.n * new_s1.d;
+      if(closest_pts_h) *closest_pts_h = new_s1.n * new_s1.d + distance * new_s2.n;
+      return true;
+    }
 
-  *distance = 0;
-  return true;
+  if(dist) *dist = -1;
+  return false;
 }
 
 //==============================================================================
@@ -1055,20 +1061,19 @@ bool planeHalfspaceIntersect(const Plane<S>& s1, const Transform3<S>& tf1,
                              S& penetration_depth,
                              int& ret)
 {
-  Plane<S> new_s1 = transform(s1, tf1);
-  Halfspace<S> new_s2 = transform(s2, tf2);
+  const Plane<S> new_s1 = transform(s1, tf1);
+  const Halfspace<S> new_s2 = transform(s2, tf2);
 
   ret = 0;
-
-  Vector3<S> dir = (new_s1.n).cross(new_s2.n);
-  S dir_norm = dir.squaredNorm();
-  if(dir_norm < std::numeric_limits<S>::epsilon()) // parallel
-  {
-    if((new_s1.n).dot(new_s2.n) > 0)
+  const Vector3<S> dir = (new_s1.n).cross(new_s2.n);
+  const S dir_norm = dir.squaredNorm();
+  if (const S distance = new_s1.d - new_s2.d;
+      dir_norm < std::numeric_limits<S>::epsilon())  // parallel
+    if ((new_s1.n).dot(new_s2.n) > 0)
     {
-      if(new_s1.d < new_s2.d)
+      if (distance <= 0)
       {
-        penetration_depth = new_s2.d - new_s1.d;
+        penetration_depth = -distance;
         ret = 1;
         pl = new_s1;
         return true;
@@ -1078,27 +1083,23 @@ bool planeHalfspaceIntersect(const Plane<S>& s1, const Transform3<S>& tf1,
     }
     else
     {
-      if(new_s1.d + new_s2.d > 0)
-        return false;
-      else
+      if (distance >= 0)
       {
-        penetration_depth = -(new_s1.d + new_s2.d);
+        penetration_depth = distance;
         ret = 2;
         pl = new_s1;
         return true;
       }
+      else
+        return false;
     }
-  }
 
-  Vector3<S> n = new_s2.n * new_s1.d - new_s1.n * new_s2.d;
-  Vector3<S> origin = n.cross(dir);
-  origin *= (1.0 / dir_norm);
-
+  const Vector3<S> n = new_s2.n * new_s1.d - new_s1.n * new_s2.d;
+  const Vector3<S> origin = n.cross(dir) * (1.0 / dir_norm);
   p = origin;
   d = dir;
   ret = 3;
   penetration_depth = std::numeric_limits<S>::max();
-
   return true;
 }
 
@@ -1118,33 +1119,24 @@ template <typename S>
 bool halfspaceHalfspaceDistance(
     const Halfspace<S>& s1, const Transform3<S>& tf1,
     const Halfspace<S>& s2, const Transform3<S>& tf2,
-    S* distance, Vector3<S>* closest_pts_h1, Vector3<S>* closest_pts_h2)
+    S* dist, Vector3<S>* closest_pts_h1, Vector3<S>* closest_pts_h2)
 {
-  Halfspace<S> new_s1 = transform(s1, tf1);
-  Halfspace<S> new_s2 = transform(s2, tf2);
+  const Halfspace<S> new_s1 = transform(s1, tf1);
+  const Halfspace<S> new_s2 = transform(s2, tf2);
 
-  Vector3<S> dir = (new_s1.n).cross(new_s2.n);
-  S dir_norm = dir.squaredNorm();
-  if(dir_norm < std::numeric_limits<S>::epsilon()) // parallel
+  const S dir_norm = (new_s1.n).cross(new_s2.n).squaredNorm();
+  if (const S distance = new_s1.d - new_s2.d;
+      dir_norm < std::numeric_limits<S>::epsilon() &&  // parallel
+      (new_s1.n).dot(new_s2.n) < 0 && distance < 0)
   {
-    S dot_prod = (new_s1.n).dot(new_s2.n);
-    if(dot_prod > 0)
-    {
-      *distance = 0;
-    }
-    else if(new_s1.d + new_s2.d > 0)
-    {
-      *distance = new_s1.d + new_s2.d;
-      *closest_pts_h1 = new_s1.n * new_s1.d;
-      *closest_pts_h2 = new_s2.n * new_s2.d;
-    }
-  }
-  else
-  {
-    *distance = 0;
+    if (dist) *dist = -distance;
+    if (closest_pts_h1) *closest_pts_h1 = new_s1.n * new_s1.d;
+    if (closest_pts_h2) *closest_pts_h2 = new_s1.n * new_s1.d + distance * new_s2.n;
+    return true;
   }
 
-  return *distance <= 0;
+  if (dist) *dist = -1;
+  return false;
 }
 
 //==============================================================================
@@ -1156,53 +1148,47 @@ bool halfspaceIntersect(const Halfspace<S>& s1, const Transform3<S>& tf1,
                         S& penetration_depth,
                         int& ret)
 {
-  Halfspace<S> new_s1 = transform(s1, tf1);
-  Halfspace<S> new_s2 = transform(s2, tf2);
+  const Halfspace<S> new_s1 = transform(s1, tf1);
+  const Halfspace<S> new_s2 = transform(s2, tf2);
 
   ret = 0;
-
-  Vector3<S> dir = (new_s1.n).cross(new_s2.n);
-  S dir_norm = dir.squaredNorm();
-  if(dir_norm < std::numeric_limits<S>::epsilon()) // parallel
-  {
-    if((new_s1.n).dot(new_s2.n) > 0)
+  const Vector3<S> dir = (new_s1.n).cross(new_s2.n);
+  const S dir_norm = dir.squaredNorm();
+  if (const S distance = new_s1.d - new_s2.d;
+      dir_norm < std::numeric_limits<S>::epsilon())  // parallel
+    if ((new_s1.n).dot(new_s2.n) > 0)
     {
-      if(new_s1.d < new_s2.d) // s1 is inside s2
+      if (distance <= 0)  // s1 is inside s2
       {
         ret = 1;
-        penetration_depth = std::numeric_limits<S>::max();
         s = new_s1;
       }
-      else // s2 is inside s1
+      else  // s2 is inside s1
       {
         ret = 2;
-        penetration_depth = std::numeric_limits<S>::max();
         s = new_s2;
       }
+      penetration_depth = std::numeric_limits<S>::max();
       return true;
     }
     else
     {
-      if(new_s1.d + new_s2.d > 0) // not collision
-        return false;
-      else // in each other
+      if (distance >= 0)  // in each other
       {
         ret = 3;
-        penetration_depth = -(new_s1.d + new_s2.d);
+        penetration_depth = distance;
         return true;
       }
+      else  // not collision
+        return false;
     }
-  }
 
-  Vector3<S> n = new_s2.n * new_s1.d - new_s1.n * new_s2.d;
-  Vector3<S> origin = n.cross(dir);
-  origin *= (1.0 / dir_norm);
-
+  const Vector3<S> n = new_s2.n * new_s1.d - new_s1.n * new_s2.d;
+  const Vector3<S> origin = n.cross(dir) * (1.0 / dir_norm);
   p = origin;
   d = dir;
   ret = 4;
   penetration_depth = std::numeric_limits<S>::max();
-
   return true;
 }
 
