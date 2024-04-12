@@ -700,7 +700,7 @@ bool coneHalfspaceDistance(const Cone<S>& s1, const Transform3<S>& tf1,
   const Vector3<S>& dir_z = R.col(2);
   const S cosa = dir_z.dot(new_s2.n);
 
-  if(cosa < halfspaceIntersectTolerance<S>())
+  if(cosa < halfspaceIntersectTolerance<S>())  // cone tip towards halfspace plane
   {
     const Vector3<S> p = T + dir_z * (s1.lz * 0.5);
     const S depth = -new_s2.signedDistance(p);
@@ -718,18 +718,21 @@ bool coneHalfspaceDistance(const Cone<S>& s1, const Transform3<S>& tf1,
   else
   {
     Vector3<S> C = dir_z * cosa - new_s2.n;
-    if(std::abs(cosa + 1) < halfspaceIntersectTolerance<S>() || std::abs(cosa - 1) < halfspaceIntersectTolerance<S>())
+    if(std::abs(cosa - 1) < halfspaceIntersectTolerance<S>())
       C = Vector3<S> {0, 0, 0};
     else
       C *= s1.radius / C.norm();
 
-    const Vector3<S> p = T - dir_z * (s1.lz * 0.5) + C;
-    const S depth = -new_s2.signedDistance(p);
+    const Vector3<S> p1 = T + dir_z * (0.5 * s1.lz);  // tip
+    const Vector3<S> p2 = T - dir_z * (0.5 * s1.lz) + C;
+    const S d1 = new_s2.signedDistance(p1);
+    const S d2 = new_s2.signedDistance(p2);
+    const S depth = -std::min(d1, d2);
     if (depth < 0)
     {
       if(dist) *dist = -depth;
-      if(closest_pts_c) *closest_pts_c = p;
-      if(closest_pts_h) *closest_pts_h = p + depth * new_s2.n;
+      if(closest_pts_c) *closest_pts_c = ((d1 < d2) ? p1 : p2);
+      if(closest_pts_h) *closest_pts_h = ((d1 < d2) ? p1 : p2) + depth * new_s2.n;
       return true;
     }
 
@@ -752,10 +755,10 @@ bool coneHalfspaceIntersect(const Cone<S>& s1, const Transform3<S>& tf1,
   const Vector3<S> dir_z = R.col(2);
   const S cosa = dir_z.dot(new_s2.n);
 
-  if(cosa < halfspaceIntersectTolerance<S>())
+  if(cosa < halfspaceIntersectTolerance<S>())  // cone tip towards halfspace plane
   {
-    S signed_dist = new_s2.signedDistance(T);
-    S depth = s1.radius - signed_dist;
+    const Vector3<S> p = T + dir_z * (s1.lz * 0.5);
+    const S depth = -new_s2.signedDistance(p);
     if(depth < 0) return false;
     else
     {
@@ -774,25 +777,24 @@ bool coneHalfspaceIntersect(const Cone<S>& s1, const Transform3<S>& tf1,
   else
   {
     Vector3<S> C = dir_z * cosa - new_s2.n;
-    if(std::abs(cosa + 1) < halfspaceIntersectTolerance<S>() || std::abs(cosa - 1) < halfspaceIntersectTolerance<S>())
+    if(std::abs(cosa - 1) < halfspaceIntersectTolerance<S>())
       C = Vector3<S> {0, 0, 0};
     else
       C *= s1.radius / C.norm();
 
-    Vector3<S> p1 = T + dir_z * (0.5 * s1.lz);
-    Vector3<S> p2 = T - dir_z * (0.5 * s1.lz) + C;
-
-    S d1 = new_s2.signedDistance(p1);
-    S d2 = new_s2.signedDistance(p2);
-
-    if(d1 > 0 && d2 > 0) return false;
+    const Vector3<S> p1 = T + dir_z * (0.5 * s1.lz);  // tip
+    const Vector3<S> p2 = T - dir_z * (0.5 * s1.lz) + C;
+    const S d1 = new_s2.signedDistance(p1);
+    const S d2 = new_s2.signedDistance(p2);
+    const S depth = -std::min(d1, d2);
+    if(depth < 0) return false;
     else
     {
       if (contacts)
       {
-        const S penetration_depth = -std::min(d1, d2);
         const Vector3<S> normal = -new_s2.n;
-        const Vector3<S> point = ((d1 < d2) ? p1 : p2) + new_s2.n * (0.5 * penetration_depth);
+        const Vector3<S> point = ((d1 < d2) ? p1 : p2) + new_s2.n * (0.5 * depth);
+        const S penetration_depth = depth;
 
         contacts->emplace_back(normal, point, penetration_depth);
       }
