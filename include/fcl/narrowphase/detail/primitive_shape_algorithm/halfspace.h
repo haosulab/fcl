@@ -215,6 +215,14 @@ FCL_EXPORT bool convexHalfspaceIntersect(
 
 template <typename S>
 FCL_EXPORT
+bool halfspaceTriangleDistance(const Halfspace<S>& s1, const Transform3<S>& tf1,
+                               const Vector3<S>& P1, const Vector3<S>& P2,
+                               const Vector3<S>& P3, const Transform3<S>& tf2,
+                               S* dist, Vector3<S>* closest_pts_h,
+                               Vector3<S>* closest_pts_t);
+
+template <typename S>
+FCL_EXPORT
 bool halfspaceTriangleIntersect(const Halfspace<S>& s1, const Transform3<S>& tf1,
                                 const Vector3<S>& P1, const Vector3<S>& P2, const Vector3<S>& P3, const Transform3<S>& tf2,
                                 Vector3<S>* contact_points, S* penetration_depth, Vector3<S>* normal);

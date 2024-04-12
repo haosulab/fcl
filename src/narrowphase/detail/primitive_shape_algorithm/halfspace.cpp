@@ -170,6 +170,14 @@ bool convexHalfspaceIntersect(const Convex<double>& convex_C,
 
 //==============================================================================
 template
+bool halfspaceTriangleDistance(
+    const Halfspace<double>& s1, const Transform3<double>& tf1,
+    const Vector3<double>& P1, const Vector3<double>& P2,
+    const Vector3<double>& P3, const Transform3<double>& tf2, double* dist,
+    Vector3<double>* closest_pts_h, Vector3<double>* closest_pts_t);
+
+//==============================================================================
+template
 bool halfspaceTriangleIntersect(
     const Halfspace<double>& s1, const Transform3<double>& tf1,
     const Vector3<double>& P1, const Vector3<double>& P2, const Vector3<double>& P3, const Transform3<double>& tf2,

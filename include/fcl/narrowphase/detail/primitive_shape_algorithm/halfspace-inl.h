@@ -159,6 +159,14 @@ bool convexHalfspaceIntersect(
 
 //==============================================================================
 extern template
+bool halfspaceTriangleDistance(
+    const Halfspace<double>& s1, const Transform3<double>& tf1,
+    const Vector3<double>& P1, const Vector3<double>& P2,
+    const Vector3<double>& P3, const Transform3<double>& tf2, double* dist,
+    Vector3<double>* closest_pts_h, Vector3<double>* closest_pts_t);
+
+//==============================================================================
+extern template
 bool halfspaceTriangleIntersect(
     const Halfspace<double>& s1, const Transform3<double>& tf1,
     const Vector3<double>& P1, const Vector3<double>& P2, const Vector3<double>& P3, const Transform3<double>& tf2,
@@ -934,9 +942,51 @@ bool convexHalfspaceIntersect(const Convex<S>& convex_C,
 
 //==============================================================================
 template <typename S>
-bool halfspaceTriangleIntersect(const Halfspace<S>& s1, const Transform3<S>& tf1,
-                                const Vector3<S>& P1, const Vector3<S>& P2, const Vector3<S>& P3, const Transform3<S>& tf2,
-                                Vector3<S>* contact_points, S* penetration_depth, Vector3<S>* normal)
+bool halfspaceTriangleDistance(const Halfspace<S>& s1, const Transform3<S>& tf1,
+                               const Vector3<S>& P1, const Vector3<S>& P2,
+                               const Vector3<S>& P3, const Transform3<S>& tf2,
+                               S* dist, Vector3<S>* closest_pts_h,
+                               Vector3<S>* closest_pts_t)
+{
+  const Halfspace<S> new_s1 = transform(s1, tf1);
+
+  Vector3<S> p_deepest = tf2 * P1;
+  S min_signed_distance = new_s1.signedDistance(p_deepest);
+
+  Vector3<S> p = tf2 * P2;
+  if(const S d = new_s1.signedDistance(p); d < min_signed_distance)
+  {
+    min_signed_distance = d;
+    p_deepest = p;
+  }
+
+  p = tf2 * P3;
+  if(const S d = new_s1.signedDistance(p); d < min_signed_distance)
+  {
+    min_signed_distance = d;
+    p_deepest = p;
+  }
+
+  if(min_signed_distance > 0)
+  {
+    if(dist) *dist = min_signed_distance;
+    if(closest_pts_t) *closest_pts_t = p_deepest;
+    if (closest_pts_h) *closest_pts_h = p_deepest - min_signed_distance * new_s1.n;
+    return true;
+  }
+
+  if(dist) *dist = -1;
+  return false;
+}
+
+//==============================================================================
+template <typename S>
+bool halfspaceTriangleIntersect(const Halfspace<S>& s1,
+                                const Transform3<S>& tf1, const Vector3<S>& P1,
+                                const Vector3<S>& P2, const Vector3<S>& P3,
+                                const Transform3<S>& tf2,
+                                Vector3<S>* contact_points,
+                                S* penetration_depth, Vector3<S>* normal)
 {
   Halfspace<S> new_s1 = transform(s1, tf1);
 
