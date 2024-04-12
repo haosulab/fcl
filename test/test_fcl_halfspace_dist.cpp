@@ -269,6 +269,15 @@ void test_distance_cone_half_space(fcl::GJKSolverType solver_type)
   fcl::distance(&half_space_obj, &cone_obj, distance_request, distance_result);
   EXPECT_NEAR(distance_result.min_distance, 0.22-0.3/sqrt(2), kTolerance);
 
+  // Do it the other way around rotate by -pi/4 and make the translation
+  X_WS.linear() = AngleAxis<S>(-fcl::constants<S>::pi()/4, 
+                               Vector3d::UnitX()).matrix();
+  cone_obj.setTransform(X_WS);
+
+  distance_result.clear();
+  fcl::distance(&half_space_obj, &cone_obj, distance_request, distance_result);
+  EXPECT_NEAR(distance_result.min_distance, 0.22-0.3/sqrt(2), kTolerance);
+
   // Finally, make the half space in the x direction
   half_space = std::make_shared<Halfspace<S>>(Vector3<S>::UnitX(), -1);
   half_space_obj = CollisionObject<S>(half_space, X_WH);
