@@ -138,13 +138,21 @@ bool coneHalfspaceIntersect(
 
 //==============================================================================
 extern template
+bool convexHalfspaceDistance(
+    const Convex<double>& convex_C, const Transform3<double>& X_FC,
+    const Halfspace<double>& half_space_H, const Transform3<double>& X_FH,
+    double* dist, Vector3<double>* closest_pts_c, Vector3<double>* closest_pts_h);
+
+//==============================================================================
+extern template
 bool convexHalfspaceIntersect(
     const Convex<double>& s1, const Transform3<double>& tf1,
     const Halfspace<double>& s2, const Transform3<double>& tf2,
     Vector3<double>* contact_points, double* penetration_depth, Vector3<double>* normal);
 
 //==============================================================================
-extern template bool convexHalfspaceIntersect(
+extern template
+bool convexHalfspaceIntersect(
     const Convex<double>& convex_C, const Transform3<double>& X_FC,
     const Halfspace<double>& half_space_H, const Transform3<double>& X_FH,
     std::vector<ContactPoint<double>>* contacts);
@@ -805,7 +813,41 @@ bool coneHalfspaceIntersect(const Cone<S>& s1, const Transform3<S>& tf1,
 }
 
 //==============================================================================
-// TODO(SeanCurtis-TRI): This is generally unused in FCL. Consider killing it.
+template <typename S>
+bool convexHalfspaceDistance(const Convex<S>& convex_C, const Transform3<S>& X_FC,
+                             const Halfspace<S>& half_space_H, const Transform3<S>& X_FH,
+                             S* dist, Vector3<S>* closest_pts_c, Vector3<S>* closest_pts_h)
+{
+  const Halfspace<S> half_space_C = transform(half_space_H, X_FC.inverse() * X_FH);
+
+  Vector3<S> p_CV_deepest;
+  S min_signed_distance = std::numeric_limits<S>::max();
+
+  // TODO: Once we have an efficient "support vector" implementation for Convex
+  //  (necessary to make GJK run faster with convex), this could benefit by
+  //  simply asking for the support vector in the negative normal direction.
+  //  That would also make computing normal_C cheaper; it could just be the
+  //  product: X_FC.linear().transpose() * X_FH.linear() * half_space_H.n.
+  for (const auto& p_CV : convex_C.getVertices())
+    if (const S signed_distance = half_space_C.signedDistance(p_CV);
+        signed_distance < min_signed_distance) {
+      min_signed_distance = signed_distance;
+      p_CV_deepest = p_CV;
+      if (signed_distance <= 0) {
+        if (dist) *dist = -1;
+        return false;
+      }
+    }
+
+  if(dist) *dist = min_signed_distance;
+  if(closest_pts_c) *closest_pts_c = X_FC * p_CV_deepest;
+  if (closest_pts_h)
+    *closest_pts_h = X_FC * p_CV_deepest -
+                     min_signed_distance * transform(half_space_H, X_FH).n;
+  return true;
+}
+
+//==============================================================================
 template <typename S>
 bool convexHalfspaceIntersect(const Convex<S>& s1, const Transform3<S>& tf1,
                               const Halfspace<S>& s2, const Transform3<S>& tf2,
