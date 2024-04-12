@@ -69,15 +69,36 @@ double halfspaceIntersectTolerance();
 
 template <typename S>
 FCL_EXPORT
+bool sphereHalfspaceDistance(
+    const Sphere<S>& s1, const Transform3<S>& tf1,
+    const Halfspace<S>& s2, const Transform3<S>& tf2,
+    S* distance, Vector3<S>* closest_pts_s, Vector3<S>* closest_pts_h);
+
+template <typename S>
+FCL_EXPORT
 bool sphereHalfspaceIntersect(const Sphere<S>& s1, const Transform3<S>& tf1,
                               const Halfspace<S>& s2, const Transform3<S>& tf2,
                               std::vector<ContactPoint<S>>* contacts);
 
 template <typename S>
 FCL_EXPORT
+bool ellipsoidHalfspaceDistance(
+    const Ellipsoid<S>& s1, const Transform3<S>& tf1,
+    const Halfspace<S>& s2, const Transform3<S>& tf2,
+    S* distance, Vector3<S>* closest_pts_e, Vector3<S>* closest_pts_h);
+
+template <typename S>
+FCL_EXPORT
 bool ellipsoidHalfspaceIntersect(const Ellipsoid<S>& s1, const Transform3<S>& tf1,
                                  const Halfspace<S>& s2, const Transform3<S>& tf2,
                                  std::vector<ContactPoint<S>>* contacts);
+
+template <typename S>
+FCL_EXPORT
+bool boxHalfspaceDistance(
+    const Box<S>& s1, const Transform3<S>& tf1,
+    const Halfspace<S>& s2, const Transform3<S>& tf2,
+    S* distance, Vector3<S>* closest_pts_b, Vector3<S>* closest_pts_h);
 
 /// @brief box half space, a, b, c  = +/- edge size
 /// n^T * (R(o + a v1 + b v2 + c v3) + T) <= d
@@ -97,9 +118,23 @@ bool boxHalfspaceIntersect(const Box<S>& s1, const Transform3<S>& tf1,
 
 template <typename S>
 FCL_EXPORT
+bool capsuleHalfspaceDistance(
+    const Capsule<S>& s1, const Transform3<S>& tf1,
+    const Halfspace<S>& s2, const Transform3<S>& tf2,
+    S* distance, Vector3<S>* closest_pts_c, Vector3<S>* closest_pts_h);
+
+template <typename S>
+FCL_EXPORT
 bool capsuleHalfspaceIntersect(const Capsule<S>& s1, const Transform3<S>& tf1,
                                const Halfspace<S>& s2, const Transform3<S>& tf2,
                                std::vector<ContactPoint<S>>* contacts);
+
+template <typename S>
+FCL_EXPORT
+bool cylinderHalfspaceDistance(
+    const Cylinder<S>& s1, const Transform3<S>& tf1,
+    const Halfspace<S>& s2, const Transform3<S>& tf2,
+    S* distance, Vector3<S>* closest_pts_c, Vector3<S>* closest_pts_h);
 
 template <typename S>
 FCL_EXPORT
@@ -109,9 +144,22 @@ bool cylinderHalfspaceIntersect(const Cylinder<S>& s1, const Transform3<S>& tf1,
 
 template <typename S>
 FCL_EXPORT
+bool coneHalfspaceDistance(
+    const Cone<S>& s1, const Transform3<S>& tf1,
+    const Halfspace<S>& s2, const Transform3<S>& tf2,
+    S* distance, Vector3<S>* closest_pts_c, Vector3<S>* closest_pts_h);
+
+template <typename S>
+FCL_EXPORT
 bool coneHalfspaceIntersect(const Cone<S>& s1, const Transform3<S>& tf1,
                             const Halfspace<S>& s2, const Transform3<S>& tf2,
                             std::vector<ContactPoint<S>>* contacts);
+
+template <typename S>
+FCL_EXPORT
+bool convexHalfspaceDistance(const Convex<S>& convex_C, const Transform3<S>& X_FC,
+                             const Halfspace<S>& half_space_H, const Transform3<S>& X_FH,
+                             S* dist, Vector3<S>* closest_pts_c, Vector3<S>* closest_pts_h);
 
 template <typename S>
 FCL_EXPORT
@@ -167,9 +215,25 @@ FCL_EXPORT bool convexHalfspaceIntersect(
 
 template <typename S>
 FCL_EXPORT
+bool halfspaceTriangleDistance(const Halfspace<S>& s1, const Transform3<S>& tf1,
+                               const Vector3<S>& P1, const Vector3<S>& P2,
+                               const Vector3<S>& P3, const Transform3<S>& tf2,
+                               S* dist, Vector3<S>* closest_pts_h,
+                               Vector3<S>* closest_pts_t);
+
+template <typename S>
+FCL_EXPORT
 bool halfspaceTriangleIntersect(const Halfspace<S>& s1, const Transform3<S>& tf1,
                                 const Vector3<S>& P1, const Vector3<S>& P2, const Vector3<S>& P3, const Transform3<S>& tf2,
                                 Vector3<S>* contact_points, S* penetration_depth, Vector3<S>* normal);
+
+template <typename S>
+FCL_EXPORT
+bool planeHalfspaceDistance(
+    const Plane<S>& s1, const Transform3<S>& tf1,
+    const Halfspace<S>& s2, const Transform3<S>& tf2,
+    S* distance, Vector3<S>* closest_pts_p, Vector3<S>* closest_pts_h);
+
 
 /// @brief return whether plane collides with halfspace
 /// if the separation plane of the halfspace is parallel with the plane
@@ -194,6 +258,14 @@ bool halfspacePlaneIntersect(const Halfspace<S>& s1, const Transform3<S>& tf1,
                              Plane<S>& pl, Vector3<S>& p, Vector3<S>& d,
                              S& penetration_depth,
                              int& ret);
+
+template <typename S>
+FCL_EXPORT
+bool halfspaceHalfspaceDistance(
+    const Halfspace<S>& s1, const Transform3<S>& tf1,
+    const Halfspace<S>& s2, const Transform3<S>& tf2,
+    S* distance, Vector3<S>* closest_pts_h1, Vector3<S>* closest_pts_h2);
+
 
 /// @brief return whether two halfspace intersect
 /// if the separation planes of the two halfspaces are parallel

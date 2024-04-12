@@ -80,7 +80,6 @@ namespace fcl
 namespace detail
 {
 
-//==============================================================================
 #if FCL_HAVE_OCTOMAP
 template <typename Shape, typename NarrowPhaseSolver>
 typename Shape::S ShapeOcTreeDistance(
@@ -204,6 +203,7 @@ typename BV::S OcTreeBVHDistance(
 
 #endif
 
+//==============================================================================
 template <typename Shape1, typename Shape2, typename NarrowPhaseSolver>
 typename Shape1::S ShapeShapeDistance(
     const CollisionGeometry<typename Shape1::S>* o1,
@@ -225,6 +225,7 @@ typename Shape1::S ShapeShapeDistance(
   return result.min_distance;
 }
 
+//==============================================================================
 template <typename BV, typename Shape, typename NarrowPhaseSolver>
 struct BVHShapeDistancer
 {
@@ -254,6 +255,7 @@ struct BVHShapeDistancer
   }
 };
 
+//==============================================================================
 template <typename OrientedMeshShapeDistanceTraversalNode,
           typename BV, typename Shape, typename NarrowPhaseSolver>
 typename Shape::S orientedBVHShapeDistance(
@@ -276,6 +278,7 @@ typename Shape::S orientedBVHShapeDistance(
   return result.min_distance;
 }
 
+//==============================================================================
 template <typename Shape, typename NarrowPhaseSolver>
 struct BVHShapeDistancer<RSS<typename Shape::S>, Shape, NarrowPhaseSolver>
 {
@@ -297,6 +300,7 @@ struct BVHShapeDistancer<RSS<typename Shape::S>, Shape, NarrowPhaseSolver>
   }
 };
 
+//==============================================================================
 template <typename Shape, typename NarrowPhaseSolver>
 struct BVHShapeDistancer<kIOS<typename Shape::S>, Shape, NarrowPhaseSolver>
 {
@@ -318,6 +322,7 @@ struct BVHShapeDistancer<kIOS<typename Shape::S>, Shape, NarrowPhaseSolver>
   }
 };
 
+//==============================================================================
 template <typename Shape, typename NarrowPhaseSolver>
 struct BVHShapeDistancer<OBBRSS<typename Shape::S>, Shape, NarrowPhaseSolver>
 {
@@ -383,6 +388,7 @@ typename BV::S BVHDistance(
         o1, tf1, o2, tf2, request, result);
 }
 
+//==============================================================================
 template <typename OrientedMeshDistanceTraversalNode, typename BV>
 typename BV::S orientedMeshDistance(
     const CollisionGeometry<typename BV::S>* o1,
@@ -473,6 +479,7 @@ typename BV::S BVHDistance(
   return BVHDistance<BV>(o1, tf1, o2, tf2, request, result);
 }
 
+//==============================================================================
 template <typename NarrowPhaseSolver>
 DistanceFunctionMatrix<NarrowPhaseSolver>::DistanceFunctionMatrix()
 {
@@ -564,6 +571,7 @@ DistanceFunctionMatrix<NarrowPhaseSolver>::DistanceFunctionMatrix()
 
   distance_matrix[GEOM_HALFSPACE][GEOM_BOX] = &ShapeShapeDistance<Halfspace<S>, Box<S>, NarrowPhaseSolver>;
   distance_matrix[GEOM_HALFSPACE][GEOM_SPHERE] = &ShapeShapeDistance<Halfspace<S>, Sphere<S>, NarrowPhaseSolver>;
+  distance_matrix[GEOM_HALFSPACE][GEOM_ELLIPSOID] = &ShapeShapeDistance<Halfspace<S>, Ellipsoid<S>, NarrowPhaseSolver>;
   distance_matrix[GEOM_HALFSPACE][GEOM_CAPSULE] = &ShapeShapeDistance<Halfspace<S>, Capsule<S>, NarrowPhaseSolver>;
   distance_matrix[GEOM_HALFSPACE][GEOM_CONE] = &ShapeShapeDistance<Halfspace<S>, Cone<S>, NarrowPhaseSolver>;
   distance_matrix[GEOM_HALFSPACE][GEOM_CYLINDER] = &ShapeShapeDistance<Halfspace<S>, Cylinder<S>, NarrowPhaseSolver>;
