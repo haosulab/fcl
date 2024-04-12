@@ -258,6 +258,26 @@ void test_distance_cone_half_space(fcl::GJKSolverType solver_type)
   distance_result.clear();
   fcl::distance(&half_space_obj, &cone_obj, distance_request, distance_result);
   EXPECT_NEAR(distance_result.min_distance, 0.11, kTolerance);
+
+  // Then, rotate the cone by pi/4 and make its translation 0.22
+  X_WS.linear() = AngleAxis<S>(fcl::constants<S>::pi()/4, 
+                               Vector3d::UnitX()).matrix();
+  X_WS.translation() = Vector3<S>(0, 0, 0.22);
+  cone_obj.setTransform(X_WS);
+
+  distance_result.clear();
+  fcl::distance(&half_space_obj, &cone_obj, distance_request, distance_result);
+  EXPECT_NEAR(distance_result.min_distance, 0.22-0.3/sqrt(2), kTolerance);
+
+  // Finally, make the half space in the x direction
+  half_space = std::make_shared<Halfspace<S>>(Vector3<S>::UnitX(), -1);
+  half_space_obj = CollisionObject<S>(half_space, X_WH);
+  X_WS = Transform3<S>::Identity();
+  cone_obj.setTransform(X_WS);
+
+  distance_result.clear();
+  fcl::distance(&half_space_obj, &cone_obj, distance_request, distance_result);
+  EXPECT_NEAR(distance_result.min_distance, 1-radius, kTolerance);
 }
 
 template <typename S>
@@ -324,13 +344,21 @@ void test_distance_plane_half_space(fcl::GJKSolverType solver_type)
   // The plane is not touching the half space
   EXPECT_NEAR(distance_result.min_distance, 1.0, kTolerance);
 
+  // flip the plane nothing should change
+  plane = std::make_shared<Plane<S>>(-Vector3<S>::UnitZ(), -1.0);
+  plane_obj = CollisionObject<S>(plane, X_WS);
+
+  distance_result.clear();
+  fcl::distance(&half_space_obj, &plane_obj, distance_request, distance_result);
+  EXPECT_NEAR(distance_result.min_distance, 1.0, kTolerance);
+
   // tilt the plane so that it is not parallel to the half space
   plane = std::make_shared<Plane<S>>(Vector3<S>(0.1,0.1,0.9899494937), 1.0);
   plane_obj = CollisionObject<S>(plane, X_WS);
 
   distance_result.clear();
   fcl::distance(&half_space_obj, &plane_obj, distance_request, distance_result);
-  EXPECT_NEAR(distance_result.min_distance, 0.0, kTolerance);
+  EXPECT_NEAR(distance_result.min_distance, -1, kTolerance);
 }
 
 template <typename S>
@@ -354,15 +382,23 @@ void test_distance_half_space_half_space(fcl::GJKSolverType solver_type)
   fcl::distance(&half_space_obj1, &half_space_obj2, distance_request, distance_result);
 
   // halfspaces oriented in the same direction
-  EXPECT_NEAR(distance_result.min_distance, 0.0, kTolerance);
+  EXPECT_NEAR(distance_result.min_distance, -1, kTolerance);
 
-  // halfspaces oriented in opposite directions
+  // flip the top half space, should have no collision
+  half_space1 = std::make_shared<Halfspace<S>>(-Vector3<S>::UnitZ(), -1.0);
+  half_space_obj1 = CollisionObject<S>(half_space1, X_WH);
+
+  distance_result.clear();
+  fcl::distance(&half_space_obj1, &half_space_obj2, distance_request, distance_result);
+  EXPECT_NEAR(distance_result.min_distance, 1.0, kTolerance);
+
+  // flip the bottom half space too on top of that. collision
   half_space2 = std::make_shared<Halfspace<S>>(-Vector3<S>::UnitZ(), 0.0);
   half_space_obj2 = CollisionObject<S>(half_space2, X_WH);
 
   distance_result.clear();
   fcl::distance(&half_space_obj1, &half_space_obj2, distance_request, distance_result);
-  EXPECT_NEAR(distance_result.min_distance, 1.0, kTolerance);
+  EXPECT_NEAR(distance_result.min_distance, -1.0, kTolerance);
 }
 
 GTEST_TEST(FCL_GEOMETRIC_SHAPES, distance_half_space_half_space_libccd)

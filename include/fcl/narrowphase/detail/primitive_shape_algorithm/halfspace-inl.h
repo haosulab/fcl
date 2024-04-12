@@ -714,47 +714,32 @@ bool coneHalfspaceDistance(const Cone<S>& s1, const Transform3<S>& tf1,
   const Vector3<S>& T = tf1.translation();
 
   const Vector3<S>& dir_z = R.col(2);
-  const S cosa = dir_z.dot(new_s2.n);
+  const Vector3<S> axis_rot = dir_z.cross(new_s2.n);
+  const Vector3<S> dir_z_turned = dir_z.cross(axis_rot).normalized();
+  const Vector3<S> tip = T + dir_z * (s1.lz * 0.5);
+  const Vector3<S> bottom1 = T - dir_z * (s1.lz * 0.5) - dir_z_turned * s1.radius;
+  const Vector3<S> bottom2 = T - dir_z * (s1.lz * 0.5) + dir_z_turned * s1.radius;
+  
+  const S d1 = new_s2.signedDistance(tip);
+  const S d2 = new_s2.signedDistance(bottom1);
+  const S d3 = new_s2.signedDistance(bottom2);
 
-  if(cosa < halfspaceIntersectTolerance<S>())  // cone tip towards halfspace plane
+  *dist = d1;
+  *closest_pts_c = tip;
+
+  if (d2 < *dist)
   {
-    const Vector3<S> p = T + dir_z * (s1.lz * 0.5);
-    const S depth = -new_s2.signedDistance(p);
-    if (depth < 0)
-    {
-      if(dist) *dist = -depth;
-      if(closest_pts_c) *closest_pts_c = p;
-      if(closest_pts_h) *closest_pts_h = p + depth * new_s2.n;
-      return true;
-    }
-
-    if(dist) *dist = -1;
-    return false;
+    *dist = d2;
+    *closest_pts_c = bottom1;
   }
-  else
+
+  if (d3 < *dist)
   {
-    Vector3<S> C = dir_z * cosa - new_s2.n;
-    if(std::abs(cosa - 1) < halfspaceIntersectTolerance<S>())
-      C = Vector3<S> {0, 0, 0};
-    else
-      C *= s1.radius / C.norm();
-
-    const Vector3<S> p1 = T + dir_z * (0.5 * s1.lz);  // tip
-    const Vector3<S> p2 = T - dir_z * (0.5 * s1.lz) + C;
-    const S d1 = new_s2.signedDistance(p1);
-    const S d2 = new_s2.signedDistance(p2);
-    const S depth = -std::min(d1, d2);
-    if (depth < 0)
-    {
-      if(dist) *dist = -depth;
-      if(closest_pts_c) *closest_pts_c = ((d1 < d2) ? p1 : p2);
-      if(closest_pts_h) *closest_pts_h = ((d1 < d2) ? p1 : p2) + depth * new_s2.n;
-      return true;
-    }
-
-    if(dist) *dist = -1;
-    return false;
+    *dist = d3;
+    *closest_pts_c = bottom2;
   }
+
+  return *dist >= 0;
 }
 
 //==============================================================================
